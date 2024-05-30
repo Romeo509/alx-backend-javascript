@@ -1,6 +1,7 @@
 import { uploadPhoto, createUser } from './utils';
 
 export default async function asyncUploadUser() {
+  // Create an empty object to store results
   let res = {};
 
   try {
