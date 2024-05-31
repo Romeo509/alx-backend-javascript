@@ -1,4 +1,6 @@
 export default class Building {
+  // Enforces subclassing to define evacuationWarningMessage
+  // and validates sqft type
   constructor(sqft) {
     if (this.constructor !== Building) {
       const props = Object.getOwnPropertyNames(this.constructor.prototype);
