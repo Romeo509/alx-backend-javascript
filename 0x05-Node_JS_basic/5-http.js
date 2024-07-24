@@ -1,42 +1,69 @@
-// Import required modules
 const http = require('http');
-const countStudents = require('./3-read_file_async');
+const fs = require('fs').promises;
 
-// Define the port and host for the server
-const PORT = 1245;
-const HOST = 'localhost';
+const hostname = '127.0.0.1';
+const port = 1245;
 
-// Create an HTTP server instance
-const app = http.createServer((req, res) => {
-  // Handle the '/' route
-  if (req.url === '/') {
-    res.setHeader('Content-Type', 'text/plain');
-    res.statusCode = 200;
-    res.end('Hello Holberton School!\n');
-  } else if (req.url === '/students') {
-    // Respond with plain text
-    res.setHeader('Content-Type', 'text/plain');
-    res.statusCode = 200;
+// Function to count students and generate output string
+async function countStudents(fileName) {
+  const students = {};
+  const fields = {};
+  let length = 0;
+  
+  try {
+    const data = await fs.readFile(fileName);
+    const lines = data.toString().split('\n');
+    lines.forEach(line => {
+      if (line) {
+        length += 1;
+        const [name, , , field] = line.split(',');
+        if (!students[field]) {
+          students[field] = [];
+        }
+        students[field].push(name);
+        fields[field] = (fields[field] || 0) + 1;
+      }
+    });
+    
+    const studentCount = length - 1; // Exclude header
+    let output = `Number of students: ${studentCount}\n`;
+    Object.entries(fields).forEach(([field, count]) => {
+      output += `Number of students in ${field}: ${count}. List: ${students[field].join(', ')}\n`;
+    });
 
-    // Call the countStudents function with the CSV file
-    countStudents('database.csv')
-      .then(() => {
-        res.end('Done!\n'); // End the response after counting students
-      })
-      .catch((error) => {
-        res.statusCode = 500; // Internal Server Error
-        res.end(`Error: ${error.message}\n`);
-      });
-  } else {
-    res.statusCode = 404; // Not Found
-    res.end('Not Found\n');
+    return output.trim();
+  } catch (error) {
+    throw new Error('Cannot load the database');
   }
+}
+
+// Function to handle HTTP requests
+async function handleRequest(req, res) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+
+  if (req.url === '/') {
+    res.end('Hello Holberton School!');
+  } else if (req.url === '/students') {
+    res.write('This is the list of our students\n');
+    try {
+      const output = await countStudents(process.argv[2]);
+      res.end(output);
+    } catch (error) {
+      res.statusCode = 500;
+      res.end(error.message);
+    }
+  } else {
+    res.statusCode = 404;
+    res.end('Not Found');
+  }
+}
+
+// Create and start HTTP server
+const app = http.createServer(handleRequest);
+
+app.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
 });
 
-// Make the server listen on the specified port and host
-app.listen(PORT, HOST, () => {
-  console.log(`Server listening at -> http://${HOST}:${PORT}`);
-});
-
-// Export the server instance
 module.exports = app;
