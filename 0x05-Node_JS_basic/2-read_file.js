@@ -1,37 +1,56 @@
 const fs = require('fs');
 
+/**
+ * Reads a CSV file and counts students by their fields.
+ * @param {string} fileName - Path to the CSV file.
+ */
 function countStudents(fileName) {
   const students = {};
   const fields = {};
-  let length = 0;
+  let totalStudents = 0;
+
   try {
+    // Read the file synchronously
     const content = fs.readFileSync(fileName, 'utf-8');
-    const lines = content.toString().split('\n');
-    for (let i = 0; i < lines.length; i += 1) {
-      if (lines[i]) {
-        length += 1;
-        const field = lines[i].toString().split(',');
-        if (Object.prototype.hasOwnProperty.call(students, field[3])) {
-          students[field[3]].push(field[0]);
-        } else {
-          students[field[3]] = [field[0]];
+
+    // Split the content by lines
+    const lines = content.split('\n');
+
+    // Process each line in the CSV file
+    for (let i = 0; i < lines.length; i += 1) { // Replaced `++` with `+= 1`
+      if (lines[i].trim()) { // Skip empty lines
+        totalStudents += 1; // Replaced `totalStudents = totalStudents + 1` with `+= 1`
+        const [firstName, , , field] = lines[i].split(',');
+
+        // Update students list for each field
+        if (!students[field]) {
+          students[field] = [];
         }
-        if (Object.prototype.hasOwnProperty.call(fields, field[3])) {
-          fields[field[3]] += 1;
-        } else {
-          fields[field[3]] = 1;
+        students[field].push(firstName);
+
+        // Update field counts
+        if (!fields[field]) {
+          fields[field] = 0;
         }
+        fields[field] += 1; // Replaced `fields[field] = fields[field] + 1` with `+= 1`
       }
     }
-    const l = length - 1;
-    console.log(`Number of students: ${l}`);
-    for (const [key, value] of Object.entries(fields)) {
-      if (key !== 'field') {
-        console.log(`Number of students in ${key}: ${value}. List: ${students[key].join(', ')}`);
+
+    // Exclude header line from total count
+    const numStudents = totalStudents - 1;
+
+    // Output total number of students
+    console.log(`Number of students: ${numStudents}`);
+
+    // Output student counts and lists for each field
+    for (const [field, count] of Object.entries(fields)) {
+      if (field !== 'field') { // Skip header field
+        console.log(`Number of students in ${field}: ${count}. List: ${students[field].join(', ')}`);
       }
     }
   } catch (error) {
-    throw Error('Cannot load the database');
+    // Handle errors related to file reading
+    throw new Error('Cannot load the database');
   }
 }
 
