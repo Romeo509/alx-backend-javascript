@@ -9,11 +9,11 @@ async function countStudents(fileName) {
   const students = {};
   const fields = {};
   let length = 0;
-  
+
   try {
     const data = await fs.readFile(fileName);
     const lines = data.toString().split('\n');
-    lines.forEach(line => {
+    lines.forEach((line) => {
       if (line) {
         length += 1;
         const [name, , , field] = line.split(',');
@@ -24,7 +24,7 @@ async function countStudents(fileName) {
         fields[field] = (fields[field] || 0) + 1;
       }
     });
-    
+
     const studentCount = length - 1; // Exclude header
     let output = `Number of students: ${studentCount}\n`;
     Object.entries(fields).forEach(([field, count]) => {
